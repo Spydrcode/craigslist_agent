@@ -1214,37 +1214,6 @@ def api_scrape_jobs():
     except Exception as e:
         logger.error(f"Scrape endpoint error: {e}", exc_info=True)
         return jsonify({'success': False, 'error': str(e), 'jobs': [], 'companies': [], 'signals': []}), 500
-                'score': int(lead_score),
-                'qualification_score': int(lead_score),
-                'qualification_reason': f"{priority} - Score: {lead_score:.1f}/100. Growth stage: {growth_stage}",
-                'pain_points': pain_points_list,
-                'value_prop': f"{len(job_postings)} jobs posted. Growth score: {growth_score:.2f}",
-                'description': first_job_description[:500] if first_job_description else company_name,
-                'job_count': len(job_postings),
-                'growth_indicators': [growth_stage]
-            })
-
-        logger.info(f"Converted {len(prospects)} prospects to {len(dashboard_jobs)} dashboard jobs")
-        if dashboard_jobs:
-            logger.info(f"Sample dashboard job: {list(dashboard_jobs[0].keys())}")
-
-        # Extract stats
-        phase_1_stats = stats.get('phase_1', {}) if stats else {}
-        jobs_scanned = phase_1_stats.get('jobs_scanned', 0)
-
-        return jsonify({
-            'success': True,
-            'jobs': dashboard_jobs,
-            'total_scraped': jobs_scanned,
-            'qualified_count': len(dashboard_jobs),
-            'pages_scraped': max_pages,
-            'stats': stats
-        })
-
-    except Exception as e:
-        logger.error(f"ERROR in scrape: {e}", exc_info=True)
-        return jsonify({'success': False, 'error': str(e)}), 200
-
 
 
 @app.route('/api/scrape-single', methods=['POST'])
