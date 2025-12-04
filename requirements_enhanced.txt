@@ -1,0 +1,63 @@
+# Core dependencies
+python-dotenv>=1.0.0
+requests>=2.31.0
+beautifulsoup4>=4.12.2
+lxml>=4.9.3
+
+# AI/ML
+openai>=1.12.0
+pinecone>=5.0.0
+tiktoken>=0.5.2
+anthropic>=0.18.0
+
+# Machine Learning
+scikit-learn>=1.4.0
+numpy>=1.26.3
+scipy>=1.11.4
+
+# Database
+supabase>=2.3.4
+
+# Data processing
+pandas>=2.1.4
+
+# Scheduling
+APScheduler>=3.10.4
+
+# Dashboard
+streamlit>=1.31.0
+plotly>=5.18.0
+flask>=3.0.0
+flask-cors>=4.0.0
+
+# Web scraping enhancement
+selenium>=4.16.0  # For JavaScript-heavy sites
+playwright>=1.41.0  # Alternative to Selenium
+
+# Company research tools
+# Note: These require API keys
+# google-search-results>=2.4.2  # SerpAPI for Google search
+# python-linkedin>=4.0  # LinkedIn integration
+# clearbit>=0.1.7  # Company enrichment
+
+# Text processing
+spacy>=3.7.2  # NLP for better text analysis
+nltk>=3.8.1  # Natural language toolkit
+
+# Data validation
+pydantic>=2.5.3
+pydantic-settings>=2.1.0
+
+# Utilities
+tenacity>=8.2.3
+ratelimit>=2.2.1
+python-dateutil>=2.8.2
+
+# Email finding (optional, requires API keys)
+# hunter>=3.2.0  # Hunter.io for finding emails
+
+# Development tools
+pytest>=7.4.4
+pytest-cov>=4.1.0
+black>=24.1.0
+flake8>=7.0.0

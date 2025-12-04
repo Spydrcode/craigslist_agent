@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forecasta Lead Qualification Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>Forecasta Lead Qualification Dashboard</h1>
+            <p class="subtitle">Multi-Agent Lead Processing & Qualification System</p>
+        </header>
+
+        <!-- Search Parameters Panel -->
+        <section class="search-panel card">
+            <h2>Search Parameters</h2>
+            <form id="searchForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="location">Location</label>
+                        <select id="location" name="location">
+                            <option value="phoenix">Phoenix</option>
+                            <option value="scottsdale">Scottsdale</option>
+                            <option value="tempe">Tempe</option>
+                            <option value="mesa">Mesa</option>
+                            <option value="chandler">Chandler</option>
+                            <option value="glendale">Glendale</option>
+                            <option value="gilbert">Gilbert</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dateRange">Date Range</label>
+                        <select id="dateRange" name="dateRange">
+                            <option value="1">Last 24 hours</option>
+                            <option value="3">Last 3 days</option>
+                            <option value="7" selected>Last 7 days</option>
+                            <option value="30">Last 30 days</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Industries</label>
+                    <div class="checkbox-grid">
+                        <label><input type="checkbox" name="industry" value="retail"> Retail</label>
+                        <label><input type="checkbox" name="industry" value="hospitality"> Hospitality</label>
+                        <label><input type="checkbox" name="industry" value="healthcare"> Healthcare</label>
+                        <label><input type="checkbox" name="industry" value="construction"> Construction</label>
+                        <label><input type="checkbox" name="industry" value="logistics"> Logistics</label>
+                        <label><input type="checkbox" name="industry" value="manufacturing"> Manufacturing</label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Search Craigslist</button>
+            </form>
+        </section>
+
+        <!-- Analytics Dashboard -->
+        <section class="analytics-panel">
+            <h2>Analytics Overview</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3 id="totalLeads">0</h3>
+                    <p>Total Leads</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="tier1Count">0</h3>
+                    <p>Tier 1 (Hot)</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="tier2Count">0</h3>
+                    <p>Tier 2 (Warm)</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="avgScore">0</h3>
+                    <p>Avg Score</p>
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <canvas id="tierChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="statusChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="industryChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filters -->
+        <section class="filters-panel card">
+            <h3>Filter Leads</h3>
+            <div class="filter-controls">
+                <select id="tierFilter">
+                    <option value="">All Tiers</option>
+                    <option value="1">Tier 1 (Hot)</option>
+                    <option value="2">Tier 2 (Warm)</option>
+                    <option value="3">Tier 3 (Medium)</option>
+                    <option value="4">Tier 4 (Cold)</option>
+                    <option value="5">Tier 5 (Disqualified)</option>
+                </select>
+
+                <select id="statusFilter">
+                    <option value="">All Statuses</option>
+                    <option value="new">New</option>
+                    <option value="contacted">Contacted</option>
+                    <option value="qualified">Qualified</option>
+                    <option value="meeting_set">Meeting Set</option>
+                    <option value="closed_won">Closed Won</option>
+                    <option value="closed_lost">Closed Lost</option>
+                </select>
+
+                <button id="refreshBtn" class="btn btn-secondary">Refresh</button>
+            </div>
+        </section>
+
+        <!-- Lead Table -->
+        <section class="leads-panel card">
+            <div class="panel-header">
+                <h2>Leads (<span id="leadCount">0</span>)</h2>
+                <div class="bulk-actions">
+                    <button id="selectAllBtn" class="btn btn-small">Select All</button>
+                    <button id="generateScriptsBtn" class="btn btn-primary" disabled>Generate Scripts</button>
+                    <button id="generateEmailsBtn" class="btn btn-primary" disabled>Generate Emails</button>
+                    <button id="exportCsvBtn" class="btn btn-secondary" disabled>Export CSV</button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table id="leadsTable">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="selectAllCheckbox"></th>
+                            <th onclick="sortTable('company_name')">Company ▼</th>
+                            <th onclick="sortTable('job_title')">Job Title ▼</th>
+                            <th onclick="sortTable('industry')">Industry ▼</th>
+                            <th onclick="sortTable('score')">Score ▼</th>
+                            <th onclick="sortTable('tier')">Tier ▼</th>
+                            <th onclick="sortTable('status')">Status ▼</th>
+                            <th onclick="sortTable('location')">Location ▼</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leadsTableBody">
+                        <!-- Populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Lead Detail Modal -->
+        <div id="leadModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <div id="leadDetail">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

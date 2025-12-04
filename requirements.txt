@@ -1,0 +1,35 @@
+# Core dependencies
+python-dotenv>=1.0.0
+requests>=2.31.0
+beautifulsoup4>=4.12.2
+lxml>=4.9.3
+
+# AI/ML
+openai>=1.60.0  # Required for Responses API and MCP support
+pinecone>=5.0.0
+tiktoken>=0.5.2
+anthropic>=0.18.0
+
+# Database
+supabase>=2.3.4
+
+# Data processing
+pandas>=2.1.4
+numpy>=1.26.3
+
+# Scheduling
+APScheduler>=3.10.4
+
+# Dashboard
+streamlit>=1.31.0
+plotly>=5.18.0
+flask>=3.0.0
+flask-cors>=4.0.0
+
+# MCP Server
+fastmcp>=0.1.0
+
+# Utilities
+pydantic>=2.5.3
+tenacity>=8.2.3
+ratelimit>=2.2.1

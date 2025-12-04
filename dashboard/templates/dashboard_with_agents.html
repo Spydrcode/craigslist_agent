@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prospecting Dashboard - Real-Time Agent Status</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        header {
+            background: white;
+            padding: 20px 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        h1 {
+            color: #1a1a2e;
+            font-size: 1.8em;
+            margin-bottom: 5px;
+        }
+
+        /* Agent Progress Widget */
+        .agent-widget {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+            margin-bottom: 20px;
+            color: white;
+            display: none; /* Hidden by default */
+        }
+
+        .agent-widget.active {
+            display: block;
+        }
+
+        .agent-widget h2 {
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .agent-widget h2 .pulse {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: #4ade80;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .overall-progress {
+            background: rgba(255,255,255,0.2);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .overall-bar {
+            background: rgba(255,255,255,0.3);
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .overall-bar-fill {
+            background: #4ade80;
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .agent-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .agent-item {
+            background: rgba(255,255,255,0.15);
+            border-radius: 8px;
+            padding: 15px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+        }
+
+        .agent-item.running {
+            background: rgba(255,255,255,0.25);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .agent-item.completed {
+            opacity: 0.7;
+        }
+
+        .agent-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .agent-name {
+            font-weight: 600;
+            font-size: 1em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .agent-status {
+            font-size: 0.85em;
+            opacity: 0.9;
+        }
+
+        .agent-progress-bar {
+            background: rgba(255,255,255,0.3);
+            height: 6px;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .agent-progress-fill {
+            background: #4ade80;
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .agent-message {
+            font-size: 0.9em;
+            margin-top: 8px;
+            opacity: 0.9;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        /* Search Panel */
+        .search-panel {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.95em;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Results */
+        .results-area {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .prospect-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.2s;
+        }
+
+        .prospect-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        }
+
+        .prospect-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+
+        .prospect-company {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+
+        .prospect-score {
+            background: #667eea;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .prospect-meta {
+            display: flex;
+            gap: 15px;
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 12px;
+        }
+
+        .btn-select {
+            background: #10b981;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn-select:hover {
+            background: #059669;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 Prospecting Dashboard</h1>
+            <p>Real-Time Agent Monitoring & Prospect Management</p>
+        </header>
+
+        <!-- Agent Progress Widget -->
+        <div id="agentWidget" class="agent-widget">
+            <h2>
+                <span class="pulse"></span>
+                Agent Pipeline Status
+            </h2>
+
+            <div class="overall-progress">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span id="overallStatus">Initializing...</span>
+                    <span id="overallPercentage">0%</span>
+                </div>
+                <div class="overall-bar">
+                    <div id="overallBarFill" class="overall-bar-fill" style="width: 0%"></div>
+                </div>
+                <div style="margin-top: 10px; font-size: 0.9em; opacity: 0.9;">
+                    <span id="elapsedTime">0s</span> elapsed •
+                    <span id="estimatedTime">Calculating...</span> remaining
+                </div>
+            </div>
+
+            <div id="agentList" class="agent-list">
+                <!-- Agent items will be inserted here -->
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalProspects">0</div>
+                <div class="stat-label">Total Prospects</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="urgentProspects">0</div>
+                <div class="stat-label">Urgent Priority</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="highProspects">0</div>
+                <div class="stat-label">High Priority</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="avgScore">0</div>
+                <div class="stat-label">Average Score</div>
+            </div>
+        </div>
+
+        <!-- Search Panel -->
+        <div class="search-panel">
+            <h2>Run New Search</h2>
+            <form id="searchForm">
+                <div class="form-group">
+                    <label>City</label>
+                    <input type="text" id="citySearch" placeholder="Search cities..." style="width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #ddd; border-radius: 6px;">
+                    <select id="city" required style="width: 100%;">
+                        <option value="">Loading cities...</option>
+                    </select>
+                    <small id="cityInfo" style="color: #666; font-size: 0.85em;"></small>
+                </div>
+
+                <div class="form-group">
+                    <label>Category</label>
+                    <input type="text" id="categorySearch" placeholder="Search categories..." style="width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #ddd; border-radius: 6px;">
+                    <select id="category" required style="width: 100%;">
+                        <option value="">Loading categories...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Keywords (optional)</label>
+                    <input type="text" id="keywords" placeholder="AI, ML, startup">
+                </div>
+
+                <div class="form-group">
+                    <label>Max Pages</label>
+                    <input type="number" id="maxPages" value="2" min="1" max="10">
+                    <small style="color: #666; display: block; margin-top: 4px;">Pages to scrape (120 listings per page)</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Max Jobs to Analyze</label>
+                    <input type="number" id="maxJobs" value="30" min="10" max="200">
+                    <small style="color: #666; display: block; margin-top: 4px;">Limit job analysis (default: 30, prevents long waits)</small>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="searchBtn">
+                    🚀 Start Search
+                </button>
+            </form>
+        </div>
+
+        <!-- Results -->
+        <div class="results-area">
+            <h2>Prospects</h2>
+            <div id="resultsContainer">
+                <p>Click "Start Search" to find prospects</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        let allLocations = [];
+        let allCategories = [];
+
+        // Load Craigslist cities and categories on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCraigslistLocations();
+            loadCraigslistCategories();
+        });
+
+        // Load all Craigslist locations
+        async function loadCraigslistLocations() {
+            try {
+                const response = await fetch('/api/craigslist/locations/flat');
+                const data = await response.json();
+
+                if (data.success) {
+                    allLocations = data.locations;
+                    populateCitySelect(allLocations);
+                    console.log(`✅ Loaded ${allLocations.length} Craigslist cities`);
+                }
+            } catch (error) {
+                console.error('Error loading locations:', error);
+                // Fallback
+                document.getElementById('city').innerHTML = `
+                    <option value="">Select a city...</option>
+                    <option value="sfbay">San Francisco Bay Area</option>
+                    <option value="seattle">Seattle</option>
+                    <option value="austin">Austin</option>
+                `;
+            }
+        }
+
+        // Populate city select with optgroups by state
+        function populateCitySelect(locations) {
+            const select = document.getElementById('city');
+            select.innerHTML = '<option value="">Select a city...</option>';
+
+            const grouped = {};
+            locations.forEach(loc => {
+                const state = loc.state || 'Other';
+                if (!grouped[state]) grouped[state] = [];
+                grouped[state].push(loc);
+            });
+
+            Object.keys(grouped).sort().forEach(state => {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = state;
+
+                grouped[state].forEach(loc => {
+                    const option = document.createElement('option');
+                    option.value = loc.code;
+                    option.textContent = loc.name;
+                    option.dataset.state = loc.state;
+                    option.dataset.country = loc.country;
+                    optgroup.appendChild(option);
+                });
+
+                select.appendChild(optgroup);
+            });
+        }
+
+        // City search filter
+        document.getElementById('citySearch').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            if (!query) {
+                populateCitySelect(allLocations);
+                return;
+            }
+
+            const filtered = allLocations.filter(loc =>
+                loc.name.toLowerCase().includes(query) ||
+                loc.code.toLowerCase().includes(query) ||
+                (loc.state && loc.state.toLowerCase().includes(query))
+            );
+            populateCitySelect(filtered);
+        });
+
+        // Show city info when selected
+        document.getElementById('city').addEventListener('change', (e) => {
+            const selected = e.target.selectedOptions[0];
+            if (selected && selected.dataset.state) {
+                document.getElementById('cityInfo').textContent =
+                    `${selected.dataset.state}, ${selected.dataset.country}`;
+            } else {
+                document.getElementById('cityInfo').textContent =
+                    'Select the Craigslist region to search';
+            }
+        });
+
+        // Load all job categories
+        async function loadCraigslistCategories() {
+            try {
+                const response = await fetch('/api/craigslist/categories');
+                const data = await response.json();
+
+                if (data.success) {
+                    allCategories = data.categories;
+                    populateCategorySelect(allCategories);
+                    console.log(`✅ Loaded ${allCategories.length} job categories`);
+                }
+            } catch (error) {
+                console.error('Error loading categories:', error);
+            }
+        }
+
+        // Populate category select
+        function populateCategorySelect(categories) {
+            const select = document.getElementById('category');
+            select.innerHTML = '<option value="">Select a category...</option>';
+
+            categories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat.code;
+                option.textContent = cat.name;
+                select.appendChild(option);
+            });
+        }
+
+        // Category search filter
+        document.getElementById('categorySearch').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            if (!query) {
+                populateCategorySelect(allCategories);
+                return;
+            }
+
+            const filtered = allCategories.filter(cat =>
+                cat.name.toLowerCase().includes(query) ||
+                cat.code.toLowerCase().includes(query)
+            );
+            populateCategorySelect(filtered);
+        });
+
+        // Connect to WebSocket
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${window.location.host}/ws/progress`);
+
+            ws.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                if (message.type === 'progress') {
+                    updateAgentWidget(message.data);
+                }
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket closed, reconnecting...');
+                setTimeout(connectWebSocket, 3000);
+            };
+        }
+
+        // Update agent widget
+        function updateAgentWidget(data) {
+            const widget = document.getElementById('agentWidget');
+            const agentList = document.getElementById('agentList');
+
+            if (!data.agents || data.agents.length === 0) {
+                widget.classList.remove('active');
+                return;
+            }
+
+            widget.classList.add('active');
+
+            // Update overall progress
+            const percentage = Math.round(data.overall_progress * 100);
+            document.getElementById('overallPercentage').textContent = `${percentage}%`;
+            document.getElementById('overallBarFill').style.width = `${percentage}%`;
+            document.getElementById('overallStatus').textContent =
+                `${data.completed_agents}/${data.total_agents} agents completed`;
+
+            // Update times
+            if (data.elapsed_time) {
+                document.getElementById('elapsedTime').textContent =
+                    `${Math.round(data.elapsed_time)}s`;
+            }
+            if (data.estimated_time_remaining) {
+                document.getElementById('estimatedTime').textContent =
+                    `~${Math.round(data.estimated_time_remaining)}s`;
+            } else {
+                document.getElementById('estimatedTime').textContent = 'Calculating...';
+            }
+
+            // Update agent list
+            agentList.innerHTML = data.agents.map(agent => `
+                <div class="agent-item ${agent.status}">
+                    <div class="agent-header">
+                        <div class="agent-name">
+                            <span>${agent.emoji}</span>
+                            <span>${agent.description}</span>
+                        </div>
+                        <div class="agent-status">
+                            ${Math.round(agent.progress * 100)}%
+                        </div>
+                    </div>
+                    <div class="agent-progress-bar">
+                        <div class="agent-progress-fill" style="width: ${agent.progress * 100}%"></div>
+                    </div>
+                    <div class="agent-message">${agent.message}</div>
+                </div>
+            `).join('');
+        }
+
+        // Load stats
+        async function loadStats() {
+            const response = await fetch('/api/stats');
+            const stats = await response.json();
+
+            document.getElementById('totalProspects').textContent = stats.total_prospects;
+            document.getElementById('urgentProspects').textContent = stats.urgent;
+            document.getElementById('highProspects').textContent = stats.high;
+            document.getElementById('avgScore').textContent = stats.avg_score;
+        }
+
+        // Load prospects
+        async function loadProspects() {
+            const response = await fetch('/api/prospects');
+            const data = await response.json();
+
+            const container = document.getElementById('resultsContainer');
+
+            if (data.prospects.length === 0) {
+                container.innerHTML = '<p>No prospects found. Run a search to get started.</p>';
+                return;
+            }
+
+            container.innerHTML = data.prospects.slice(0, 10).map(p => `
+                <div class="prospect-card">
+                    <div class="prospect-header">
+                        <div class="prospect-company">${p.company_profile?.name || 'Unknown'}</div>
+                        <div class="prospect-score">${Math.round(p.lead_score)}/100</div>
+                    </div>
+                    <div class="prospect-meta">
+                        <span>Priority: ${p.priority_tier}</span>
+                        <span>Growth: ${p.company_profile?.growth_signals?.growth_stage || 'N/A'}</span>
+                        <span>Jobs: ${p.job_postings?.length || 0}</span>
+                    </div>
+                    <button class="btn-select" onclick="selectProspect('${p.lead_id}')">
+                        Select for Outreach
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // Submit search
+        document.getElementById('searchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const btn = document.getElementById('searchBtn');
+            btn.disabled = true;
+            btn.textContent = 'Searching...';
+
+            const data = {
+                city: document.getElementById('city').value,
+                category: document.getElementById('category').value,
+                keywords: document.getElementById('keywords').value.split(',').map(k => k.trim()).filter(k => k),
+                max_pages: parseInt(document.getElementById('maxPages').value),
+                max_jobs: parseInt(document.getElementById('maxJobs').value)
+            };
+
+            try {
+                const response = await fetch('/api/scrape', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                console.log('Search started:', result);
+
+            } catch (error) {
+                console.error('Search error:', error);
+                alert('Search failed: ' + error.message);
+            } finally {
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.textContent = '🚀 Start Search';
+                    loadStats();
+                    loadProspects();
+                }, 60000); // Re-enable after 1 minute
+            }
+        });
+
+        // Select prospect
+        async function selectProspect(leadId) {
+            const name = prompt('Your name:');
+            const company = prompt('Your company:');
+
+            if (!name || !company) return;
+
+            try {
+                const response = await fetch(`/api/prospect/${leadId}/select`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        your_name: name,
+                        your_company: company,
+                        your_title: 'Solutions Consultant'
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('Prospect selected! Outreach content generated.');
+                    loadProspects();
+                }
+            } catch (error) {
+                alert('Failed to select prospect: ' + error.message);
+            }
+        }
+
+        // Initialize
+        connectWebSocket();
+        loadStats();
+        loadProspects();
+    </script>
+</body>
+</html>

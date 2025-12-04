@@ -1,0 +1,128 @@
+@app.route('/api/scrape', methods=['POST'])
+def api_scrape_jobs():
+    """Scrape jobs from Craigslist using the full orchestrator pipeline with real-time agent progress."""
+    logger.info("=== SCRAPE ENDPOINT HIT ===")
+
+    try:
+        logger.info("Step 1: Initializing orchestrator...")
+        if not init_agents():
+            return jsonify({'success': False, 'error': 'Failed to initialize orchestrator'}), 200
+
+        if not orchestrator:
+            return jsonify({'success': False, 'error': 'Orchestrator not available'}), 200
+
+        logger.info("Step 2: Getting request data...")
+        data = request.get_json()
+        city = data.get('city', 'phoenix')
+        category = data.get('category', 'sof')
+        keywords = data.get('keywords', [])
+        max_pages = data.get('max_pages', 2)
+        max_jobs = data.get('max_jobs', 30)  # Limit number of companies to analyze deeply
+
+        logger.info(f"Running full orchestrator pipeline: {city}/{category}, max_pages={max_pages}, max_companies={max_jobs}")
+
+        # Run the full ObservableOrchestrator pipeline
+        # This will automatically update progress via agent_progress module and WebSocket
+        result = orchestrator.find_prospects(
+            city=city,
+            category=category,
+            keywords=keywords,
+            max_pages=max_pages,
+            max_jobs=max_jobs
+        )
+
+        if not result.get('success'):
+            logger.error(f"Orchestrator failed: {result.get('error')}")
+            return jsonify({
+                'success': False,
+                'error': result.get('error', 'Unknown error'),
+                'jobs': []
+            }), 200
+
+        # Extract prospects from orchestrator result
+        prospects = result.get('prospects', [])
+        stats = result.get('stats', {})
+
+        logger.info(f"Orchestrator completed: {len(prospects)} prospects found")
+
+        # Convert ProspectLead objects to dashboard format
+        dashboard_jobs = []
+        for prospect in prospects:
+            # Extract company profile
+            company_profile = prospect.company_profile if hasattr(prospect, 'company_profile') else {}
+            company_name = company_profile.name if hasattr(company_profile, 'name') else 'Unknown Company'
+
+            # Extract first job posting for display
+            job_postings = prospect.job_postings if hasattr(prospect, 'job_postings') else []
+            first_job = job_postings[0] if job_postings else None
+
+            # Map priority tier
+            priority = prospect.priority_tier if hasattr(prospect, 'priority_tier') else 'MEDIUM'
+            tier_map = {
+                'HOT': 'TIER 1',
+                'QUALIFIED': 'TIER 2',
+                'POTENTIAL': 'TIER 3',
+                'LOW': 'TIER 4'
+            }
+            tier = tier_map.get(priority, 'TIER 3')
+
+            # Get growth signals
+            growth_signals = company_profile.growth_signals if hasattr(company_profile, 'growth_signals') else None
+            growth_score = growth_signals.growth_score if growth_signals and hasattr(growth_signals, 'growth_score') else 0
+            growth_stage = growth_signals.growth_stage if growth_signals and hasattr(growth_signals, 'growth_stage') else 'Unknown'
+
+            # Extract data from first job
+            first_job_title = first_job.title if first_job and hasattr(first_job, 'title') else company_name
+            first_job_url = first_job.url if first_job and hasattr(first_job, 'url') else ''
+            first_job_location = first_job.location if first_job and hasattr(first_job, 'location') else ''
+            first_job_date = first_job.posted_date.isoformat() if first_job and hasattr(first_job, 'posted_date') and first_job.posted_date else 'Recent'
+            first_job_salary = first_job.salary_text if first_job and hasattr(first_job, 'salary_text') else ''
+            first_job_description = first_job.description if first_job and hasattr(first_job, 'description') else ''
+
+            # Get pain points
+            pain_points_list = []
+            if first_job and hasattr(first_job, 'pain_points'):
+                pain_points_list = first_job.pain_points[:3]
+
+            # Get lead score
+            lead_score = prospect.lead_score if hasattr(prospect, 'lead_score') else 0
+
+            # Create dashboard job entry
+            dashboard_jobs.append({
+                'title': first_job_title,
+                'url': first_job_url,
+                'location': first_job_location,
+                'date': first_job_date,
+                'compensation': first_job_salary,
+                'company': company_name,
+                'tier': tier,
+                'score': int(lead_score),
+                'qualification_score': int(lead_score),
+                'qualification_reason': f"{priority} - Score: {lead_score:.1f}/100. Growth stage: {growth_stage}",
+                'pain_points': pain_points_list,
+                'value_prop': f"{len(job_postings)} jobs posted. Growth score: {growth_score:.2f}",
+                'description': first_job_description[:500] if first_job_description else company_name,
+                'job_count': len(job_postings),
+                'growth_indicators': [growth_stage]
+            })
+
+        logger.info(f"Returning {len(dashboard_jobs)} prospects to dashboard")
+
+        # Extract stats
+        phase_1_stats = stats.get('phase_1', {}) if stats else {}
+        jobs_scanned = phase_1_stats.get('jobs_scanned', 0)
+
+        return jsonify({
+            'success': True,
+            'jobs': dashboard_jobs,
+            'total_scraped': jobs_scanned,
+            'qualified_count': len(dashboard_jobs),
+            'pages_scraped': max_pages,
+            'stats': stats
+        })
+
+    except Exception as e:
+        logger.error(f"ERROR in scrape: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 200
+
+

@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Dashboard - Forecasta</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: white;
+            padding: 20px 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            color: #1a1a2e;
+            font-size: 1.8em;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95em;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .clients-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .client-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .client-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .client-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .client-name {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 5px;
+        }
+
+        .tier-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .tier-1 { background: #d4edda; color: #155724; }
+        .tier-2 { background: #d1ecf1; color: #0c5460; }
+        .tier-3 { background: #fff3cd; color: #856404; }
+        .tier-4 { background: #f8d7da; color: #721c24; }
+
+        .client-info {
+            margin: 10px 0;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .client-info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .pain-points {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .pain-points h4 {
+            font-size: 0.9em;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .pain-points ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .pain-points li {
+            padding: 4px 0;
+            color: #555;
+            font-size: 0.85em;
+        }
+
+        .pain-points li:before {
+            content: "• ";
+            color: #667eea;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .no-clients {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 8px;
+            color: #666;
+        }
+
+        .no-clients h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .client-actions {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.85em;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-small:hover {
+            background: #5568d3;
+        }
+
+        .btn-action {
+            padding: 8px 16px;
+            font-size: 0.9em;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+
+        .btn-action:hover {
+            background: #5568d3;
+        }
+
+        .btn-action.secondary {
+            background: #6c757d;
+        }
+
+        .btn-action.secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-action.success {
+            background: #28a745;
+        }
+
+        .btn-action.success:hover {
+            background: #218838;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 3% auto;
+            padding: 0;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 900px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            padding: 20px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.5em;
+        }
+
+        .close {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+
+        .close:hover {
+            opacity: 0.8;
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 25px;
+        }
+
+        .section h3 {
+            color: #667eea;
+            font-size: 1.1em;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .section-content {
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .agent-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .code-block {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .summary-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        .clickable-card {
+            cursor: pointer;
+        }
+
+        .clickable-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1>Client Dashboard</h1>
+                <p class="subtitle">Manage your qualified leads</p>
+            </div>
+            <a href="/" class="btn btn-secondary">Back to Search</a>
+        </header>
+
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="totalClients">-</div>
+                <div class="stat-label">Total Clients</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="tier1Count">-</div>
+                <div class="stat-label">Tier 1 Clients</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="tier2Count">-</div>
+                <div class="stat-label">Tier 2 Clients</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="tier3Count">-</div>
+                <div class="stat-label">Tier 3 Clients</div>
+            </div>
+        </div>
+
+        <div id="clientsContainer">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading clients...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client Detail Modal -->
+    <div id="clientModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Client Details</h2>
+                <button class="close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Content will be dynamically inserted -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allClients = [];
+        async function loadClients() {
+            try {
+                const response = await fetch('/api/clients');
+                const data = await response.json();
+
+                if (data.success && data.clients) {
+                    allClients = data.clients;
+                    displayClients(data.clients);
+                } else {
+                    document.getElementById('clientsContainer').innerHTML = `
+                        <div class="no-clients">
+                            <h2>No clients yet</h2>
+                            <p>Start searching for leads and add them as clients.</p>
+                            <a href="/" class="btn btn-secondary" style="margin-top: 20px;">Go to Search</a>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading clients:', error);
+                document.getElementById('clientsContainer').innerHTML = `
+                    <div class="no-clients">
+                        <h2>Error loading clients</h2>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function displayClients(clients) {
+            if (!clients || clients.length === 0) {
+                document.getElementById('clientsContainer').innerHTML = `
+                    <div class="no-clients">
+                        <h2>No clients yet</h2>
+                        <p>Start searching for leads and add them as clients.</p>
+                        <a href="/" class="btn btn-secondary" style="margin-top: 20px;">Go to Search</a>
+                    </div>
+                `;
+                return;
+            }
+
+            // Update stats
+            document.getElementById('totalClients').textContent = clients.length;
+            document.getElementById('tier1Count').textContent = clients.filter(c => c.tier === 'TIER 1').length;
+            document.getElementById('tier2Count').textContent = clients.filter(c => c.tier === 'TIER 2').length;
+            document.getElementById('tier3Count').textContent = clients.filter(c => c.tier === 'TIER 3').length;
+
+            // Display client cards
+            const html = clients.map(client => {
+                const tierClass = client.tier?.toLowerCase().replace(' ', '-') || 'tier-4';
+                const painPoints = client.pain_points || [];
+                const painPointsHtml = painPoints.length > 0 ? `
+                    <div class="pain-points">
+                        <h4>Pain Points</h4>
+                        <ul>
+                            ${painPoints.slice(0, 3).map(p => `<li>${escapeHtml(p)}</li>`).join('')}
+                        </ul>
+                    </div>
+                ` : '';
+
+                return `
+                    <div class="client-card clickable-card" onclick="openClientDetail('${client.client_id}')">
+                        <div class="client-header">
+                            <div>
+                                <div class="client-name">${escapeHtml(client.company_name || 'Unknown')}</div>
+                                <div class="client-info">${escapeHtml(client.industry || 'N/A')} • ${escapeHtml(client.location || 'N/A')}</div>
+                            </div>
+                            <span class="tier-badge ${tierClass}">${client.tier || 'N/A'}</span>
+                        </div>
+
+                        <div class="client-info-row">
+                            <span class="info-label">Score:</span>
+                            <span>${client.score || 0}/100</span>
+                        </div>
+                        <div class="client-info-row">
+                            <span class="info-label">Job Count:</span>
+                            <span>${client.job_count || 'N/A'}</span>
+                        </div>
+                        <div class="client-info-row">
+                            <span class="info-label">Added:</span>
+                            <span>${new Date(client.added_date).toLocaleDateString()}</span>
+                        </div>
+                        <div class="client-info-row">
+                            <span class="info-label">Status:</span>
+                            <span>${client.outreach_status || 'NEW'}</span>
+                        </div>
+
+                        ${painPointsHtml}
+
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; text-align: center; color: #667eea; font-size: 0.9em;">
+                            Click for full details and agent actions →
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('clientsContainer').innerHTML = `
+                <div class="clients-grid">
+                    ${html}
+                </div>
+            `;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function openClientDetail(clientId) {
+            const client = allClients.find(c => c.client_id === clientId);
+            if (!client) return;
+
+            document.getElementById('modalTitle').textContent = client.company_name;
+
+            const painPoints = client.pain_points || [];
+            const painPointsHtml = painPoints.length > 0 ? `
+                <ul>
+                    ${painPoints.map(p => `<li>${escapeHtml(p)}</li>`).join('')}
+                </ul>
+            ` : '<p><em>No pain points identified yet</em></p>';
+
+            const modalHtml = `
+                <div class="summary-box">
+                    <h3>Company Summary</h3>
+                    <p><strong>Industry:</strong> ${escapeHtml(client.industry || 'Not specified')}</p>
+                    <p><strong>Location:</strong> ${escapeHtml(client.location || 'Not specified')}</p>
+                    <p><strong>Tier:</strong> ${client.tier || 'N/A'} (Score: ${client.score || 0}/100)</p>
+                    <p><strong>Job Count:</strong> ${client.job_count || 'N/A'} positions</p>
+                    <p><strong>Qualification:</strong> ${escapeHtml(client.qualification_reason || 'N/A')}</p>
+                    <p><strong>Value Proposition:</strong> ${escapeHtml(client.value_proposition || 'N/A')}</p>
+                </div>
+
+                <div class="section">
+                    <h3>🎯 Pain Points</h3>
+                    <div class="section-content">
+                        ${painPointsHtml}
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>🤖 AI Agent Actions</h3>
+                    <div class="agent-actions">
+                        <button class="btn-action" onclick="generateEmail('${clientId}')">📧 Generate Email</button>
+                        <button class="btn-action" onclick="generateCallScript('${clientId}')">📞 Generate Call Script</button>
+                        <button class="btn-action" onclick="researchCompany('${clientId}')">🔍 Deep Research</button>
+                        <button class="btn-action" onclick="generateImage('${clientId}')">🖼️ Generate Visual</button>
+                        <button class="btn-action secondary" onclick="updateStatus('${clientId}')">✏️ Update Status</button>
+                        <button class="btn-action secondary" onclick="addNotes('${clientId}')">📝 Add Notes</button>
+                    </div>
+                </div>
+
+                ${client.email_draft ? `
+                    <div class="section">
+                        <h3>📧 Email Template</h3>
+                        <div class="code-block">${escapeHtml(client.email_draft)}</div>
+                    </div>
+                ` : ''}
+
+                ${client.call_script ? `
+                    <div class="section">
+                        <h3>📞 Call Script</h3>
+                        <div class="code-block">${escapeHtml(client.call_script)}</div>
+                    </div>
+                ` : ''}
+
+                ${client.notes ? `
+                    <div class="section">
+                        <h3>📝 Notes</h3>
+                        <div class="section-content">${escapeHtml(client.notes)}</div>
+                    </div>
+                ` : ''}
+
+                <div class="section">
+                    <h3>📊 Details</h3>
+                    <div class="section-content">
+                        <p><strong>Client ID:</strong> ${client.client_id}</p>
+                        <p><strong>Added:</strong> ${new Date(client.added_date).toLocaleString()}</p>
+                        <p><strong>Status:</strong> ${client.outreach_status || 'NEW'}</p>
+                        ${client.source_url ? `<p><strong>Source:</strong> <a href="${client.source_url}" target="_blank">View Job Posting</a></p>` : ''}
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('modalBody').innerHTML = modalHtml;
+            document.getElementById('clientModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('clientModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('clientModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        // Agent action functions
+        async function generateEmail(clientId) {
+            const client = allClients.find(c => c.client_id === clientId);
+            alert('Generate Email agent will be implemented here.\\n\\nThis will use AI to create a personalized outreach email for ' + client.company_name);
+            // TODO: Implement API call to generate email
+        }
+
+        async function generateCallScript(clientId) {
+            const client = allClients.find(c => c.client_id === clientId);
+            alert('Generate Call Script agent will be implemented here.\\n\\nThis will create a personalized call script for ' + client.company_name);
+            // TODO: Implement API call to generate call script
+        }
+
+        async function researchCompany(clientId) {
+            const client = allClients.find(c => c.client_id === clientId);
+            alert('Deep Research agent will be implemented here.\\n\\nThis will research ' + client.company_name + ' in depth using web search and other sources.');
+            // TODO: Implement API call for company research
+        }
+
+        async function generateImage(clientId) {
+            const client = allClients.find(c => c.client_id === clientId);
+            alert('Generate Visual agent will be implemented here.\\n\\nThis will create visual content for outreach to ' + client.company_name);
+            // TODO: Implement API call to generate images
+        }
+
+        function updateStatus(clientId) {
+            const newStatus = prompt('Enter new status (NEW, CONTACTED, QUALIFIED, CLOSED, etc.):');
+            if (newStatus) {
+                alert('Status update will be implemented. New status: ' + newStatus);
+                // TODO: Implement API call to update status
+            }
+        }
+
+        function addNotes(clientId) {
+            const notes = prompt('Enter notes for this client:');
+            if (notes) {
+                alert('Notes will be saved: ' + notes);
+                // TODO: Implement API call to save notes
+            }
+        }
+
+        // Load clients on page load
+        loadClients();
+    </script>
+</body>
+</html>
